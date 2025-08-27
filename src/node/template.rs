@@ -10,10 +10,12 @@ pub struct Template {
 }
 
 impl Template {
+    /// Execute the node
     pub fn execute(self) -> Result<NodeData, String> {
         let mut output = self.pattern;
         for (k, v) in self.data {
-            output = output.replace(&k, &v);
+            let placeholder = format!("{{{}}}", k);
+            output = output.replace(&placeholder, &v);
         }
         Ok(NodeData::String(output))
     }

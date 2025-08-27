@@ -30,7 +30,7 @@ pub fn starlark_mod(globals: &mut GlobalsBuilder) {
         let node = Output {
             name: name.to_string(),
             file: file.to_string(),
-            content: Box::new(NodeField::auto(content)),
+            content: NodeField::auto(content),
         };
         NODES.with(|f| f.borrow_mut().nodes.push(Node::Output(node.clone())));
         Ok(format!(":{}", node.name))
@@ -39,7 +39,7 @@ pub fn starlark_mod(globals: &mut GlobalsBuilder) {
     fn run(name: &str, target: &str) -> starlark::Result<String> {
         let node = Run {
             name: name.to_string(),
-            target: Box::new(NodeField::auto(target)),
+            target: NodeField::auto(target),
         };
         NODES.with(|f| f.borrow_mut().nodes.push(Node::Run(node.clone())));
         Ok(format!(":{}", node.name))

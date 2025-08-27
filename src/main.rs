@@ -38,8 +38,7 @@ fn main() -> Result<(), String> {
         Err(e) => return Err(format!("Failed to create AST: {}", e)),
     };
 
-    let mut graph = NODES.with(|f| f.borrow().clone());
-    println!("Initital: {:#?}", graph.nodes);
+    let graph = NODES.with(|f| f.borrow().clone());
 
     let run_nodes: Vec<Node> = graph
         .nodes
@@ -50,15 +49,10 @@ fn main() -> Result<(), String> {
         })
         .map(|n| n.clone())
         .collect::<Vec<Node>>();
-    // println!("Run nodes: {:#?}", run_nodes);
-
-    graph.resolve()?;
-
-    println!("Resolved: {:#?}", graph.nodes);
 
     for node in run_nodes {
         println!("Executing node: {}", node.clone().get_name());
-        node.execute()?;
+        node.execute(&graph)?;
     }
 
     Ok(())

@@ -28,21 +28,13 @@ impl Node {
         }
     }
 
-    /// Exxecute the node
-    pub fn execute(self) -> Result<NodeData, String> {
+    /// Execute the node
+    pub fn execute(self, graph: &Graph) -> Result<NodeData, String> {
         match self {
+            Node::Output(n) => n.execute(graph),
+            Node::Run(n) => n.execute(graph),
             Node::Template(n) => n.execute(),
-            Node::Output(n) => n.execute(),
-            Node::Run(n) => n.execute(),
             _ => return Err(format!("Unresolved node !")),
-        }
-    }
-
-    pub fn resolve(&mut self, graph: Graph) -> Result<(), String> {
-        match self {
-            Node::Output(n) => n.resolve(graph),
-            Node::Run(n) => n.resolve(graph),
-            _ => return Ok(()),
         }
     }
 }

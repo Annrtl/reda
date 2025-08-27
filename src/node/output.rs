@@ -1,28 +1,38 @@
 use std::{fs::File, io::Write};
 
-use crate::{graph::Graph, node::Node, node_data::NodeData, node_field::NodeField};
+use crate::{graph::Graph, node_data::NodeData, node_field::NodeField};
 
 #[derive(Debug, Clone)]
 pub struct Output {
     pub name: String,
     pub file: String,
-    pub content: Box<NodeField>,
+    pub content: NodeField,
 }
 
 impl Output {
-    pub fn execute(self) -> Result<NodeData, String> {
-        let mut file = match File::open(self.file) {
+    /// Execute the node
+    pub fn execute(&self, graph: &Graph) -> Result<NodeData, String> {
+        let mut file = match File::options()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(self.file.clone())
+        {
             Ok(file) => file,
-            Err(e) => return Err(e.to_string()),
+            Err(e) => {
+                return Err(format!(
+                    "Failed to open file `{}` of node `{}`: {}",
+                    self.file, self.name, e
+                ));
+            }
         };
 
-        let data: NodeData = match *self.content {
-            NodeField::NodeRef(n) => match n {
-                crate::node::Node::Template(template) => template.execute()?,
-                _ => return Err(format!("Found unappropriated type")),
-            },
-            NodeField::String(n) => NodeData::String(n),
-            // _ => return Err(format!("Found unappropriated type"))
+        let data: NodeData = match &self.content {
+            NodeField::NodeRef(n) => {
+                let node = graph.get_node(&n)?;
+                node.execute(graph)?
+            }
+            NodeField::String(n) => NodeData::String(n.to_string()),
         };
 
         let content = match data {
@@ -36,31 +46,5 @@ impl Output {
         };
 
         Ok(NodeData::None())
-    }
-
-    pub fn resolve(&mut self, graph: Graph) -> Result<(), String> {
-        // Look for unresolved node and get its name else result
-        let name = match &(*self.content) {
-            NodeField::NodeRef(Node::Unresolved(n)) => n,
-            _ => return Ok(()),
-        };
-
-        // Find the corresponding node
-        let nodes = graph
-            .nodes
-            .iter()
-            .filter(|n| (*n).clone().get_name() == *name)
-            .map(|n| n.clone())
-            .collect::<Vec<Node>>();
-
-        // Get the node (shoud be unique)
-        let Some(node) = nodes.first() else {
-            return Err(format!("Node {} not found during graph resolution", name));
-        };
-
-        // Update the field with the node itself
-        self.content = Box::new(NodeField::NodeRef(node.clone()));
-
-        Ok(())
     }
 }

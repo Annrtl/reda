@@ -16,13 +16,12 @@ impl Graph {
         Graph { nodes: vec![] }
     }
 
-    pub fn resolve(&mut self) -> Result<(), String> {
-        let graph = self.clone();
-
-        for node in &mut self.nodes {
-            node.resolve(graph.clone())?;
+    pub fn get_node(&self, name: &str) -> Result<Node, String> {
+        for node in &self.nodes {
+            if node.clone().get_name() == name {
+                return Ok(node.clone());
+            }
         }
-
-        Ok(())
+        return Err(format!("Failed to find node `{}` in the graph", name));
     }
 }
