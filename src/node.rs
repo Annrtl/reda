@@ -1,9 +1,10 @@
 use crate::{
     graph::Graph,
-    node::{output::Output, run::Run, template::Template},
+    node::{json_file::JsonFile, output::Output, run::Run, template::Template},
     node_data::NodeData,
 };
 
+pub mod json_file;
 pub mod output;
 pub mod run;
 pub mod template;
@@ -12,8 +13,9 @@ pub mod template;
 #[derive(Debug, Clone)]
 pub enum Node {
     Unresolved(String),
-    Template(Template),
+    JsonFile(JsonFile),
     Output(Output),
+    Template(Template),
     Run(Run),
 }
 

@@ -4,25 +4,27 @@ use starlark::{environment::GlobalsBuilder, starlark_module, values::dict::DictR
 
 use crate::{
     graph::NODES,
-    node::{Node, output::Output, run::Run, template::Template},
+    node::{Node, json_file::JsonFile, output::Output, run::Run, template::Template},
     node_field::NodeField,
 };
 
+fn dict_to_hashmap(dict: DictRef) -> HashMap<String, String> {
+    let mut hashmap: HashMap<String, String> = HashMap::new();
+    for (k, v) in dict.iter() {
+        hashmap.insert(k.to_str(), v.to_str());
+    }
+    hashmap
+}
+
 #[starlark_module]
 pub fn starlark_mod(globals: &mut GlobalsBuilder) {
-    fn template(name: &str, pattern: &str, data: DictRef) -> starlark::Result<String> {
-        let mut data_dict: HashMap<String, String> = HashMap::new();
-
-        for (k, v) in data.iter() {
-            data_dict.insert(k.to_str(), v.to_str());
-        }
-
-        let node = Template {
+    fn json_file(name: &str, file: &str, outputs: DictRef) -> starlark::Result<String> {
+        let node = JsonFile {
             name: name.to_string(),
-            pattern: pattern.to_string(),
-            data: data_dict,
+            file: file.to_string(),
+            outputs: dict_to_hashmap(outputs),
         };
-        NODES.with(|f| f.borrow_mut().nodes.push(Node::Template(node.clone())));
+        NODES.with(|f| f.borrow_mut().nodes.push(Node::JsonFile(node.clone())));
         Ok(format!(":{}", node.name))
     }
 
@@ -42,6 +44,16 @@ pub fn starlark_mod(globals: &mut GlobalsBuilder) {
             target: NodeField::auto(target),
         };
         NODES.with(|f| f.borrow_mut().nodes.push(Node::Run(node.clone())));
+        Ok(format!(":{}", node.name))
+    }
+
+    fn template(name: &str, pattern: &str, data: DictRef) -> starlark::Result<String> {
+        let node = Template {
+            name: name.to_string(),
+            pattern: pattern.to_string(),
+            data: dict_to_hashmap(data),
+        };
+        NODES.with(|f| f.borrow_mut().nodes.push(Node::Template(node.clone())));
         Ok(format!(":{}", node.name))
     }
 }
